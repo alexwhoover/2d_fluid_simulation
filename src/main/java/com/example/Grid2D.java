@@ -1,6 +1,9 @@
 package com.example;
 
 public class Grid2D {
+    /*
+    Convention is +y is up
+     */
     private double[][] vfx, vfy;
     public Grid2D(int cols, int rows) {
         this.vfx = new double[rows][cols + 1];
@@ -14,16 +17,29 @@ public class Grid2D {
     }
 
     public double getTop(int i, int j) {
-        return vfy[j][i];
+        return vfy[j+1][i];
     }
     public double getBottom(int i, int j) {
-        return vfy[j+1][i];
+        return vfy[j][i];
     }
     public double getLeft(int i, int j) {
         return vfx[j][i];
     }
     public double getRight(int i, int j) {
         return vfx[j][i+1];
+    }
+
+    public void setTop(int i, int j, double val) {
+        vfy[j+1][i] = val;
+    }
+    public void setBottom(int i, int j, double val) {
+        vfy[j][i] = val;
+    }
+    public void setLeft(int i, int j, double val) {
+        vfx[j][i] = val;
+    }
+    public void setRight(int i, int j, double val) {
+        vfx[j][i+1] = val;
     }
 
     public void randomize(double min, double max) {

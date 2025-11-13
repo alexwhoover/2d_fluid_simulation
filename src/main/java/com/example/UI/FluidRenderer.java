@@ -1,5 +1,7 @@
-package com.example;
+package com.example.UI;
 
+import com.example.Physics.SubstanceField;
+import com.example.Physics.VelocityField;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -9,69 +11,39 @@ import javafx.scene.shape.Line;
 public class FluidRenderer {
     private int cols;
     private int rows;
-    private double cellSize;
-    private VelocityField vf;
+    public double cellSize;
 
-    public FluidRenderer(VelocityField vf, int cols, int rows, double sceneWidth, double sceneHeight) {
+    public FluidRenderer(int cols, int rows, double cellSize) {
         this.cols = cols;
         this.rows = rows;
-        this.vf = vf;
-
-        double usableWidth = sceneWidth * 0.75;
-        double usableHeight = sceneHeight * 0.90;
-
-        // Calculate cellSize based on which dimension is the limiting factor
-        double cellSizeByWidth = usableWidth / cols;
-        double cellSizeByHeight = usableHeight / rows;
-
-        // Use the smaller value to ensure grid fits
-        this.cellSize = Math.min(cellSizeByWidth, cellSizeByHeight);
+        this.cellSize = cellSize;
     }
 
-    public VelocityField getVelocityField() {
-        return vf;
-    }
-
-    public void vStep(Grid2D F, double visc, double dt) {
-        vf.vStep(F, visc, dt);
-    }
-
-    public void drawPressure(Pane pane) {
+    public void drawVels(Pane pane, VelocityField vf) {
         /*
         Grid is mirrored, so +y is down
          */
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                double pressure = vf.getPressure(col, row);
-                String pressureText = String.format("%.2f", pressure);
+                double speed = vf.vels.calcCentre(col, row);
+                double norm = Math.min(speed, 20.0) / 20.0;
 
-                // Calculate center position of the cell
-                double centerX = col * cellSize + cellSize / 2;
-                double centerY = row * cellSize + cellSize / 2;
-
-                javafx.scene.text.Text text = new javafx.scene.text.Text(centerX, centerY, pressureText);
-                text.setFill(Color.WHITE);
-                text.setFont(javafx.scene.text.Font.font(16));
-
-                // Center the text horizontally and vertically
-                text.setTextOrigin(javafx.geometry.VPos.CENTER);
-                text.setX(centerX - text.getLayoutBounds().getWidth() / 2);
-
-                pane.getChildren().add(text);
+                Color cellColor = Color.color(norm, 0, 1-norm);
+                fillCell(pane, row, col, cellColor);
             }
         }
     }
 
-    public void drawVels(Pane pane) {
+    public void drawDensity(Pane pane, SubstanceField sf) {
         /*
         Grid is mirrored, so +y is down
          */
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                double speed = vf.getCurr().calcCentre(col, row);
-                double norm = Math.min(speed, 10.0) / 10.0;
+                double density = sf.substance[row][col];
+                double norm = Math.min(density, 2.0) / 2.0;
 
-                Color cellColor = Color.gray(norm);
+                Color cellColor = Color.color(norm, norm, norm);
                 fillCell(pane, row, col, cellColor);
             }
         }
@@ -88,12 +60,11 @@ public class FluidRenderer {
                 cellSize
         );
         cell.setFill(color);
-        cell.setStroke(Color.BLACK);
         cell.setStrokeWidth(1);
         pane.getChildren().add(cell);
     }
 
-    public void drawArrows(Pane pane, double magnifier, Color color) {
+    public void drawArrows(Pane pane, VelocityField vf, double magnifier, Color color) {
         /*
         Grid is mirrored, so +y is down
          */
@@ -104,16 +75,16 @@ public class FluidRenderer {
                 double cellX = i * cellSize;
                 double cellY = j * cellSize;
 
-                double leftVel = vf.getCurr().getLeft(i, j);
+                double leftVel = vf.vels.getLeft(i, j);
                 drawArrow(pane, cellX, cellY + cellSize / 2, leftVel * arrowLength, 0, color);
 
-                double rightVel = vf.getCurr().getRight(i, j);
+                double rightVel = vf.vels.getRight(i, j);
                 drawArrow(pane, cellX + cellSize, cellY + cellSize / 2, rightVel * arrowLength, 0, color);
 
-                double topVel = vf.getCurr().getTop(i, j); // Bottom because mirrored
+                double topVel = vf.vels.getTop(i, j); // Bottom because mirrored
                 drawArrow(pane, cellX + cellSize / 2, cellY + cellSize, 0, topVel * arrowLength, color);
 
-                double bottomVel = vf.getCurr().getBottom(i, j); // Top because mirrored
+                double bottomVel = vf.vels.getBottom(i, j); // Top because mirrored
                 drawArrow(pane, cellX + cellSize / 2, cellY, 0, bottomVel * arrowLength, color);
             }
         }

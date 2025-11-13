@@ -1,68 +1,102 @@
 package com.example;
 
+import com.example.Physics.Fluid;
+import com.example.Physics.SubstanceField;
+import com.example.Physics.VelocityField;
+import com.example.UI.*;
 import javafx.animation.AnimationTimer;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class FluidSimulation extends Application
 {
-    private UIControls uicontrols;
+    private UIControls ui;
     private Pane simCanvas;
     private Scene scene;
+    private final double dtPerFrame = 1.0 / 30.0;
+    private final int cols = 100;
+    private final int rows = 100 * 2/3;
+    private final int sceneWidth = 1200;
+    private final int sceneHeight = 800;
+    private final double cellDist = 1.0;
 
     @Override
     public void start(Stage primaryStage) {
         setupUI();
-        int cols = 10;
-        int rows = 6;
-        double cellSize = 1.0; // 1m is 1 grid width
 
-        VelocityField vf = new VelocityField(cols, rows, cellSize);
-        vf.getCurr().randomize(-3, 3);
+        Fluid f = new Fluid(cols, rows);
+        FluidRenderer renderer = new FluidRenderer(cols, rows, calcCellSize());
+        MouseInteraction mouseInteraction = new MouseInteraction(f, ui, cols, rows, renderer.cellSize * cols, renderer.cellSize * rows, dtPerFrame, 3.0, 1.0);
+        mouseInteraction.attachToPane(simCanvas);
 
-        FluidRenderer renderer = new FluidRenderer(vf, cols, rows, scene.getWidth(), scene.getHeight());
         primaryStage.setTitle("Fluid Simulation");
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        uicontrols.setVelocityField(vf);
-
         AnimationTimer timer = new AnimationTimer() {
-            @Override
-            public void handle(long l) {
-                // Swap(U1, U0), Swap(S1, S0)
-                // Vstep(U1, U0, visc, F, dt)
-                // Sstep(S1, S0, kS, aS, U1, Ssource, dt)
+            private long prevTime = 0;
+            private double acc = 0.0;
 
+            @Override
+            public void handle(long now) {
+                if (prevTime == 0) {
+                    prevTime = now;
+                    return;
+                }
+
+                double deltaTime = (now - prevTime) / 1_000_000_000.0;
+                prevTime = now;
+                acc += deltaTime;
+
+                // Read current values from UI each frame
+                DisplayMode dispMode = ui.getDisplayMode();
+
+                while (acc >= dtPerFrame) {
+                    f.step(dtPerFrame);
+                    acc -= dtPerFrame;
+                }
+
+                // Update Canvas
                 simCanvas.getChildren().clear();
-                renderer.getVelocityField().solvePressure(uicontrols.getTimestep(), 50);
-                renderer.drawVels(simCanvas);
-                renderer.drawPressure(simCanvas);
-                renderer.drawArrows(simCanvas, uicontrols.getArrowScale(), Color.SANDYBROWN);
+                switch(dispMode) {
+                    case DENSITY:
+                        renderer.drawDensity(simCanvas, f.sf);
+                        break;
+
+                    case VELOCITY:
+                        renderer.drawVels(simCanvas, f.vf);
+                        break;
+                }
             }
         };
         timer.start();
     }
 
     private void setupUI() {
-        BorderPane root = new BorderPane();
         simCanvas = new Pane();
-        uicontrols = new UIControls();
+        simCanvas.setPrefSize(sceneWidth, sceneHeight);
 
-        StackPane centerContainer = new StackPane(simCanvas);
-        StackPane.setMargin(simCanvas, new Insets(50));
+        ui = new UIControls();
+        VBox cp = ui.getControlPanel();
+        cp.setMaxWidth(VBox.USE_PREF_SIZE);
 
-        root.setCenter(centerContainer);
-        root.setRight(uicontrols.getControlPanel());
+        StackPane root = new StackPane(simCanvas, cp);
+        StackPane.setAlignment(cp, Pos.CENTER_RIGHT);
 
-        scene = new Scene(root, 1200, 800);
+        scene = new Scene(root, sceneWidth, sceneHeight);
+    }
+
+    public double calcCellSize() {
+        double cellSizeByWidth = (double) sceneWidth / cols;
+        double cellSizeByHeight = (double) sceneHeight / rows;
+        return Math.min(cellSizeByWidth, cellSizeByHeight);
     }
 
     public static void main(String[] args) {

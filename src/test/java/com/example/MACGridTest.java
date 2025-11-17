@@ -1,8 +1,8 @@
 package com.example;
 
 import com.example.DataStructures.MACGrid;
-import org.junit.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MACGridTest {
     @Test

@@ -93,7 +93,7 @@ public class MouseInteraction {
         Convert a vector in screen coordinate system to grid coordinate system
          */
         double gridX = screenCoord.x * (cols / gridWidth);
-        double gridY = screenCoord.y * (rows / gridWidth);
+        double gridY = screenCoord.y * (rows / gridHeight);
         return new Vector(gridX, gridY);
     }
 }

@@ -2,6 +2,7 @@ package com.example.Physics;
 
 import com.example.DataStructures.MACGrid;
 import com.example.DataStructures.Vector;
+import com.example.Utils.MathUtils;
 
 public class SubstanceField
 {
@@ -45,9 +46,9 @@ public class SubstanceField
                 }
                 else {
                     Vector pos = new Vector(i + 0.5, j + 0.5);
-                    Vector vel = U.getValAtGridPos(pos);
+                    Vector vel = MathUtils.MAC_getValAtGridPos(U, pos);
                     Vector posPrev = new Vector(pos.x - vel.x * dt, pos.y - vel.y * dt);
-                    double subDensity = bilinearInterp(posPrev);
+                    double subDensity = MathUtils.getValAtGridPos(substance, posPrev, cols, rows);
                     sTemp[j][i] = subDensity;
                 }
             }
@@ -78,36 +79,5 @@ public class SubstanceField
                 }
             }
         }
-    }
-
-    public double bilinearInterp(Vector pos) {
-        // TODO CLEAN THIS UP, AI GENERATED
-        // Clamp position to valid grid bounds (cell centers are at 0.5, 1.5, ..., cols-0.5)
-        double x = Math.max(0.5, Math.min(cols - 0.5, pos.x));
-        double y = Math.max(0.5, Math.min(rows - 0.5, pos.y));
-
-        // Get the cell indices (subtract 0.5 because cell centers are offset)
-        int i = (int)(x - 0.5);
-        int j = (int)(y - 0.5);
-
-        // Clamp to array bounds
-        i = Math.max(0, Math.min(cols - 1, i));
-        j = Math.max(0, Math.min(rows - 1, j));
-
-        // Get fractional parts for interpolation
-        double fx = (x - 0.5) - i;
-        double fy = (y - 0.5) - j;
-
-        // Get the four surrounding cell values
-        double s00 = substance[j][i];
-        double s10 = (i + 1 < cols) ? substance[j][i + 1] : s00;
-        double s01 = (j + 1 < rows) ? substance[j + 1][i] : s00;
-        double s11 = (i + 1 < cols && j + 1 < rows) ? substance[j + 1][i + 1] : s00;
-
-        // Bilinear interpolation
-        double s0 = s00 * (1 - fx) + s10 * fx;
-        double s1 = s01 * (1 - fx) + s11 * fx;
-
-        return s0 * (1 - fy) + s1 * fy;
     }
 }

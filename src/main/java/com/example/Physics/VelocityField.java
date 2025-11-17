@@ -2,6 +2,7 @@ package com.example.Physics;
 
 import com.example.DataStructures.MACGrid;
 import com.example.DataStructures.Vector;
+import com.example.Utils.MathUtils;
 
 public class VelocityField {
     /*
@@ -99,9 +100,9 @@ public class VelocityField {
                 }
                 else {
                     Vector pos = new Vector(i, j + 0.5);
-                    Vector vel = vels.getValAtGridPos(pos);
+                    Vector vel = MathUtils.MAC_getValAtGridPos(vels, pos);
                     Vector posPrev = new Vector(pos.x - vel.x * dt, pos.y - vel.y * dt);
-                    Vector velPrev = vels.getValAtGridPos(posPrev);
+                    Vector velPrev = MathUtils.MAC_getValAtGridPos(vels, posPrev);
                     vTemp.setX(i, j, velPrev.x);
                 }
             }
@@ -119,9 +120,9 @@ public class VelocityField {
                 }
                 else {
                     Vector pos = new Vector(i + 0.5, j);
-                    Vector vel = vels.getValAtGridPos(pos);
+                    Vector vel = MathUtils.MAC_getValAtGridPos(vels, pos);
                     Vector posPrev = new Vector(pos.x - vel.x * dt, pos.y - vel.y * dt);
-                    Vector velPrev = vels.getValAtGridPos(posPrev);
+                    Vector velPrev = MathUtils.MAC_getValAtGridPos(vels, posPrev);
                     vTemp.setY(i, j, velPrev.y);
                 }
             }

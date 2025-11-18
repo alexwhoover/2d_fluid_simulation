@@ -133,7 +133,7 @@ public class VelocityField {
     }
 
     public void project(double dt) {
-        solvePressure(dt, 100);
+        solvePressure(dt, 30);
         double invK = dt / density;
 
         // Update horizontal velocities (on vertical boundaries)

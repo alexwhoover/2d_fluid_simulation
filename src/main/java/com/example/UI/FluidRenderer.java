@@ -47,7 +47,24 @@ public class FluidRenderer {
                 Color cellColor;
 
                 if (!f.vf.isSolid(col, row)) {
-                    cellColor = Color.color(norm, norm, norm);
+                    // Some ugly code to have a dark purple to yellow to red colour gradient
+                    double r, g, b;
+
+                    if (norm < 0.5) {
+                        // First half: dark purple (0.5, 0, 0.5) → yellow (1, 1, 0)
+                        double t = norm * 2.0; // 0 → 1
+                        r = 0.5 + t * 0.5;     // 0.5 → 1.0
+                        g = t;                 // 0.0 → 1.0
+                        b = 0.5 - t * 0.5;     // 0.5 → 0.0
+                    } else {
+                        // Second half: yellow (1, 1, 0) → red (1, 0, 0)
+                        double t = (norm - 0.5) * 2.0; // 0 → 1
+                        r = 1.0;               // stays 1.0
+                        g = 1.0 - t;           // 1.0 → 0.0
+                        b = 0.0;               // stays 0.0
+                    }
+
+                    cellColor = Color.color(r, g, b);
                 }
                 else {
                     cellColor = Color.DARKGRAY;

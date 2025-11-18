@@ -16,10 +16,10 @@ public class FluidSimulation extends Application
     private UIControls uicontrols;
     private Pane simPane;
     private Scene scene;
-    private final double dt = 1.0 / 30.0;
-    private final double visc = 10.0;
-    private final int cols = 150;
-    private final int rows = 150 * 2/3;
+    private final double dt = 1.0 / 24.0;
+    private final double visc = 1.0;
+    private final int cols = 120;
+    private final int rows = 120 * 2/3;
     private final int sceneWidth = 1200;
     private final int sceneHeight = 800;
 
@@ -87,7 +87,7 @@ public class FluidSimulation extends Application
                         break;
 
                     case VELOCITY:
-                        renderer.drawVels(simPane, f, 50.0);
+                        renderer.drawVels(simPane, f, 100.0);
                         break;
                 }
             }

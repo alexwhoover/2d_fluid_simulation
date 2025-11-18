@@ -54,7 +54,7 @@ public class MouseInteraction {
 
         switch (intMode) {
             case VELOCITY:
-                Vector mouseVel = calcMouseVel(lastPos, currPos, 1.0);
+                Vector mouseVel = calcMouseVel(lastPos, currPos, 3.0);
                 f.vf.applyVelocityInRadius(currPos.x, currPos.y, mouseVel.x, mouseVel.y, radius);
                 break;
 

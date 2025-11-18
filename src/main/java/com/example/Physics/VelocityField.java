@@ -29,9 +29,107 @@ public class VelocityField {
         this.density = 1.0;
     }
 
-    public void vStep(double dt) {
+    public void vStep(double dt, double visc) {
         advect(dt);
+        diffuse(dt, visc);
         project(dt);
+    }
+
+    public void advect(double dt) {
+        /*
+        Semi-Lagrangian method.
+        To solve for the advection part, we trace each point of
+        the field backward in time. The new velocity at x is therefore
+        the velocity that the particle had a time dt ago at the old location
+        p(x; dt).
+         */
+
+        MACGrid vTemp = new MACGrid(cols, rows);
+
+        // Update horizontal velocities (on vertical boundaries)
+        // There are (cols+1) vertical boundaries and rows cells vertically
+        for (int j = 0; j < rows; j++) {
+            for (int i = 0; i <= cols; i++) {
+                boolean leftSolid = isSolid(i - 1, j);
+                boolean rightSolid = isSolid(i, j);
+
+                if (!leftSolid && !rightSolid) {
+                    Vector pos = new Vector(i, j + 0.5);
+                    Vector vel = MathUtils.MAC_getValAtGridPos(vels, pos);
+                    Vector posPrev = new Vector(pos.x - vel.x * dt, pos.y - vel.y * dt);
+                    Vector velPrev = MathUtils.MAC_getValAtGridPos(vels, posPrev);
+                    vTemp.setX(i, j, velPrev.x);
+                }
+            }
+        }
+
+        // Update vertical velocities (on horizontal boundaries)
+        // There are cols cells horizontally and (rows+1) horizontal boundaries
+        for (int j = 0; j <= rows; j++) {
+            for (int i = 0; i < cols; i++) {
+                boolean bottomSolid = isSolid(i, j - 1);
+                boolean topSolid = isSolid(i, j);
+
+                if (!bottomSolid && !topSolid) {
+                    Vector pos = new Vector(i + 0.5, j);
+                    Vector vel = MathUtils.MAC_getValAtGridPos(vels, pos);
+                    Vector posPrev = new Vector(pos.x - vel.x * dt, pos.y - vel.y * dt);
+                    Vector velPrev = MathUtils.MAC_getValAtGridPos(vels, posPrev);
+                    vTemp.setY(i, j, velPrev.y);
+                }
+            }
+        }
+
+        vels.pasteGrid(vTemp);
+    }
+
+    public void diffuse(double dt, double visc) {
+        if (visc <= 1e-9) {
+            return; // No viscosity, skip diffusion.
+        }
+
+        int iters = 20;
+        double a = visc * dt;
+        MACGrid u = vels.copyGrid();
+
+        for (int iter = 0; iter < iters; iter++) {
+            // Horizontal
+            for (int j = 0; j < rows; j++) {
+                for (int i = 0; i <= cols; i++) {
+                    boolean leftSolid = isSolid(i - 1, j);
+                    boolean rightSolid = isSolid(i, j);
+
+                    if (!leftSolid && !rightSolid) {
+                        double centre = vels.getX(i,j);
+                        double top = u.getX(i,j+1);
+                        double bottom = u.getX(i,j-1);
+                        double left = u.getX(i-1,j);
+                        double right = u.getX(i+1,j);
+                        double v = (centre + a * (left + right + top + bottom))/(1.0 + 4.0 * a);
+                        u.setX(i, j, v);
+                    }
+                }
+            }
+
+            // Vertical
+            for (int j = 0; j <= rows; j++) {
+                for (int i = 0; i < cols; i++) {
+                    boolean bottomSolid = isSolid(i, j - 1);
+                    boolean topSolid = isSolid(i, j);
+
+                    if (!bottomSolid && !topSolid) {
+                        double centre = vels.getY(i,j);
+                        double top = u.getY(i,j+1);
+                        double bottom = u.getY(i,j-1);
+                        double left = u.getY(i-1,j);
+                        double right = u.getY(i+1,j);
+                        double v = (centre + a * (left + right + top + bottom))/(1.0 + 4.0 * a);
+                        u.setY(i, j, v);
+                    }
+                }
+            }
+        }
+        vels.pasteGrid(u);
     }
 
     public void project(double dt) {
@@ -74,71 +172,6 @@ public class VelocityField {
                     double v = u - invK * (pTop - pBottom);
                     vels.setY(i, j, v);
                 }
-            }
-        }
-    }
-
-    public void advect(double dt) {
-        /*
-        Semi-Lagrangian method.
-        To solve for the advection part, we trace each point of
-        the field backward in time. The new velocity at x is therefore
-        the velocity that the particle had a time dt ago at the old location
-        p(x; dt).
-         */
-
-        MACGrid vTemp = new MACGrid(cols, rows);
-
-        // Update horizontal velocities (on vertical boundaries)
-        // There are (cols+1) vertical boundaries and rows cells vertically
-        for (int j = 0; j < rows; j++) {
-            for (int i = 0; i <= cols; i++) {
-                boolean leftSolid = isSolid(i - 1, j);
-                boolean rightSolid = isSolid(i, j);
-
-                if (leftSolid || rightSolid) {
-                    continue;
-                }
-                else {
-                    Vector pos = new Vector(i, j + 0.5);
-                    Vector vel = MathUtils.MAC_getValAtGridPos(vels, pos);
-                    Vector posPrev = new Vector(pos.x - vel.x * dt, pos.y - vel.y * dt);
-                    Vector velPrev = MathUtils.MAC_getValAtGridPos(vels, posPrev);
-                    vTemp.setX(i, j, velPrev.x);
-                }
-            }
-        }
-
-        // Update vertical velocities (on horizontal boundaries)
-        // There are cols cells horizontally and (rows+1) horizontal boundaries
-        for (int j = 0; j <= rows; j++) {
-            for (int i = 0; i < cols; i++) {
-                boolean bottomSolid = isSolid(i, j - 1);
-                boolean topSolid = isSolid(i, j);
-
-                if (bottomSolid || topSolid) {
-                    continue;
-                }
-                else {
-                    Vector pos = new Vector(i + 0.5, j);
-                    Vector vel = MathUtils.MAC_getValAtGridPos(vels, pos);
-                    Vector posPrev = new Vector(pos.x - vel.x * dt, pos.y - vel.y * dt);
-                    Vector velPrev = MathUtils.MAC_getValAtGridPos(vels, posPrev);
-                    vTemp.setY(i, j, velPrev.y);
-                }
-            }
-        }
-
-        // Copy vTemp values to curr
-        for (int j = 0; j < rows; j++) {
-            for (int i = 0; i <= cols; i++) {
-                vels.setX(i, j, vTemp.getX(i, j));
-            }
-        }
-
-        for (int j = 0; j <= rows; j++) {
-            for (int i = 0; i < cols; i++) {
-                vels.setY(i, j, vTemp.getY(i, j));
             }
         }
     }

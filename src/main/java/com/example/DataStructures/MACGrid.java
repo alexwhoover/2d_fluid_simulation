@@ -32,20 +32,60 @@ public class MACGrid {
 
     public void setX(int i, int j, double val) { setLeft(i, j, val); }
     public void setY(int i, int j, double val) { setBottom(i, j, val); }
-    public void setTop(int i, int j, double val) { vfy[j+1][i] = val; }
-    public void setBottom(int i, int j, double val) { vfy[j][i] = val; }
-    public void setLeft(int i, int j, double val) { vfx[j][i] = val; }
-    public void setRight(int i, int j, double val) { vfx[j][i+1] = val; }
+    public void setTop(int i, int j, double val) { vfy[clampJ(j+1)][clampI(i)] = val; }
+    public void setBottom(int i, int j, double val) { vfy[clampJ(j)][clampI(i)] = val; }
+    public void setLeft(int i, int j, double val) { vfx[clampJ(j)][clampI(i)] = val; }
+    public void setRight(int i, int j, double val) { vfx[clampJ(j)][clampI(i+1)] = val; }
 
     private int clampI(int i) {
-        return clamp(i, 0, cols);
+        return clamp(i, 0, cols - 1);
     }
 
     private int clampJ(int j) {
-        return clamp(j, 0, rows);
+        return clamp(j, 0, rows - 1);
     }
 
     private int clamp(int val, int min, int max) {
         return Math.max(min, Math.min(val, max));
+    }
+
+    public MACGrid copyGrid() {
+        MACGrid temp = new MACGrid(cols, rows);
+        // Copy horizontal (vfx)
+        for (int j = 0; j < rows; j++) {
+            for (int i = 0; i <= cols; i++) {
+                temp.setX(i, j, this.getX(i, j));
+            }
+        }
+        // Copy vertical (vfy)
+        for (int j = 0; j <= rows; j++) {
+            for (int i = 0; i < cols; i++) {
+                temp.setY(i, j, this.getY(i, j));
+            }
+        }
+
+        return temp;
+    }
+
+    public void pasteGrid(MACGrid other) {
+        if (other == null) {
+            throw new IllegalArgumentException("MACGrid cannot be null");
+        }
+        if (other.cols != this.cols || other.rows != this.rows) {
+            throw new IllegalArgumentException("Grid dimensions do not match for pasteGrid.");
+        }
+
+        // Copy horizontal (vfx)
+        for (int j = 0; j < rows; j++) {
+            for (int i = 0; i <= cols; i++) {
+                this.setX(i, j, other.getX(i, j));
+            }
+        }
+        // Copy vertical (vfy)
+        for (int j = 0; j <= rows; j++) {
+            for (int i = 0; i < cols; i++) {
+                this.setY(i, j, other.getY(i, j));
+            }
+        }
     }
 }

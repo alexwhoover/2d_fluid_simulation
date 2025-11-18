@@ -17,6 +17,7 @@ public class FluidSimulation extends Application
     private Pane simPane;
     private Scene scene;
     private final double dt = 1.0 / 30.0;
+    private final double visc = 10.0;
     private final int cols = 150;
     private final int rows = 150 * 2/3;
     private final int sceneWidth = 1200;
@@ -44,7 +45,7 @@ public class FluidSimulation extends Application
 
         FluidRenderer renderer = new FluidRenderer(cols, rows, calcCellSize());
         Fluid f = new Fluid(cols, rows);
-        MouseInteraction mouseInteraction = new MouseInteraction(f, uicontrols, calcCellSize(), dt, 3.0, 1.0);
+        MouseInteraction mouseInteraction = new MouseInteraction(f, uicontrols, calcCellSize(), dt, 5.0, 1.0);
         mouseInteraction.attachToPane(simPane);
         primaryStage.setTitle("Fluid Simulation");
         primaryStage.setScene(scene);
@@ -74,7 +75,7 @@ public class FluidSimulation extends Application
                 DisplayMode dispMode = uicontrols.getDisplayMode();
 
                 while (acc >= dt) {
-                    f.step(dt);
+                    f.step(dt, visc);
                     acc -= dt;
                 }
 

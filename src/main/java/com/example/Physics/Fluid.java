@@ -13,8 +13,8 @@ public class Fluid {
         this.rows = rows;
     }
 
-    public void step(double dt) {
-        vf.vStep(dt);
+    public void step(double dt, double visc) {
+        vf.vStep(dt, visc);
         sf.sStep(vf.vels, dt);
     }
 }

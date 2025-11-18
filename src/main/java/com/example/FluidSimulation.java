@@ -13,12 +13,12 @@ import javafx.stage.Stage;
 
 public class FluidSimulation extends Application
 {
-    private UIControls ui;
-    private Pane simCanvas;
+    private UIControls uicontrols;
+    private Pane simPane;
     private Scene scene;
-    private final double dtPerFrame = 1.0 / 60.0;
-    private final int cols = 100;
-    private final int rows = 100 * 2/3;
+    private final double dt = 1.0 / 30.0;
+    private final int cols = 150;
+    private final int rows = 150 * 2/3;
     private final int sceneWidth = 1200;
     private final int sceneHeight = 800;
 
@@ -29,11 +29,23 @@ public class FluidSimulation extends Application
         MouseInteraction Object: Handles click-and-drag interactions with fluid
         FluidRenderer Object: Handles drawing the fluid to the screen
          */
-        setupUI();
+        simPane = new Pane();
+        simPane.setPrefSize(sceneWidth, sceneHeight);
+
+        uicontrols = new UIControls(); // Stores all buttons and drop-downs
+        VBox cp = uicontrols.getControlPanel();
+        cp.setMaxWidth(VBox.USE_PREF_SIZE);
+
+        // cp VBox will be overlaid on simPane
+        StackPane root = new StackPane(simPane, cp);
+        StackPane.setAlignment(cp, Pos.CENTER_RIGHT);
+
+        scene = new Scene(root, sceneWidth, sceneHeight);
+
         FluidRenderer renderer = new FluidRenderer(cols, rows, calcCellSize());
         Fluid f = new Fluid(cols, rows);
-        MouseInteraction mouseInteraction = new MouseInteraction(f, ui, cols, rows, calcCellSize() * cols, calcCellSize() * rows, dtPerFrame, 3.0, 1.0);
-        mouseInteraction.attachToPane(simCanvas);
+        MouseInteraction mouseInteraction = new MouseInteraction(f, uicontrols, calcCellSize(), dt, 3.0, 1.0);
+        mouseInteraction.attachToPane(simPane);
         primaryStage.setTitle("Fluid Simulation");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -59,41 +71,27 @@ public class FluidSimulation extends Application
                 acc += deltaTime;
 
                 // Read current values from UI each frame
-                DisplayMode dispMode = ui.getDisplayMode();
+                DisplayMode dispMode = uicontrols.getDisplayMode();
 
-                while (acc >= dtPerFrame) {
-                    f.step(dtPerFrame);
-                    acc -= dtPerFrame;
+                while (acc >= dt) {
+                    f.step(dt);
+                    acc -= dt;
                 }
 
                 // Update Canvas
-                simCanvas.getChildren().clear();
+                simPane.getChildren().clear();
                 switch(dispMode) {
                     case DENSITY:
-                        renderer.drawDensity(simCanvas, f.sf, 2.0);
+                        renderer.drawDensity(simPane, f, 2.0);
                         break;
 
                     case VELOCITY:
-                        renderer.drawVels(simCanvas, f.vf, 20.0);
+                        renderer.drawVels(simPane, f, 50.0);
                         break;
                 }
             }
         };
         timer.start();
-    }
-
-    private void setupUI() {
-        simCanvas = new Pane();
-        simCanvas.setPrefSize(sceneWidth, sceneHeight);
-
-        ui = new UIControls();
-        VBox cp = ui.getControlPanel();
-        cp.setMaxWidth(VBox.USE_PREF_SIZE);
-
-        StackPane root = new StackPane(simCanvas, cp);
-        StackPane.setAlignment(cp, Pos.CENTER_RIGHT);
-
-        scene = new Scene(root, sceneWidth, sceneHeight);
     }
 
     public double calcCellSize() {

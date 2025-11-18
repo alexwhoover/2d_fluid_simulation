@@ -2,36 +2,28 @@ package com.example.UI;
 
 import com.example.DataStructures.Vector;
 import com.example.Physics.Fluid;
-import com.example.Physics.SubstanceField;
-import com.example.Physics.VelocityField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 
 public class MouseInteraction {
     private final Fluid f;
-    private final UIControls ui;
+    private final UIControls uicontrols;
 
-    private final double gridWidth; // Width of grid in screen distance
-    private final double gridHeight; // Height of grid in screen distance
-    private final int cols;
-    private final int rows;
+    private final double cellSize;
 
     private Vector lastPos;
     private boolean isDragging;
 
-    private double timestep;
+    private double dt;
     private double radius;
     private double sAmount;
     private InteractionMode intMode;
 
-    public MouseInteraction(Fluid f, UIControls ui, int cols, int rows, double gridWidth, double gridHeight, double timestep, double radius, double sAmount) {
+    public MouseInteraction(Fluid f, UIControls uicontrols, double cellSize, double dt, double radius, double sAmount) {
         this.f = f;
-        this.ui = ui;
-        this.cols = cols;
-        this.rows = rows;
-        this.gridWidth = gridWidth;
-        this.gridHeight = gridHeight;
-        this.timestep = timestep;
+        this.uicontrols = uicontrols;
+        this.cellSize = cellSize;
+        this.dt = dt;
         this.radius = radius;
         this.sAmount = sAmount;
         this.intMode = InteractionMode.VELOCITY;
@@ -46,7 +38,7 @@ public class MouseInteraction {
 
     private void handleMousePressed(MouseEvent event) {
         Vector screenPos = new Vector(event.getX(), event.getY());
-        lastPos = screenToGrid(screenPos);
+        lastPos = clampGridCoord(screenToGrid(screenPos));
         isDragging = true;
     }
 
@@ -55,10 +47,10 @@ public class MouseInteraction {
             return;
         }
 
-        intMode = ui.getInteractionMode();
+        intMode = uicontrols.getInteractionMode();
 
         Vector screenPos = new Vector(event.getX(), event.getY());
-        Vector currPos = screenToGrid(screenPos);
+        Vector currPos = clampGridCoord(screenToGrid(screenPos));
 
         switch (intMode) {
             case VELOCITY:
@@ -83,8 +75,8 @@ public class MouseInteraction {
         lastPos and currPos should be in grid coordinate system.
         Returns a velocity vector in units [1 gridcell width]/[s]
          */
-        double vx = (currPos.x - lastPos.x) / timestep * magnifier;
-        double vy = (currPos.y - lastPos.y) / timestep * magnifier;
+        double vx = (currPos.x - lastPos.x) / dt * magnifier;
+        double vy = (currPos.y - lastPos.y) / dt * magnifier;
         return new Vector(vx, vy);
     }
 
@@ -92,8 +84,14 @@ public class MouseInteraction {
         /*
         Convert a vector in screen coordinate system to grid coordinate system
          */
-        double gridX = screenCoord.x * (cols / gridWidth);
-        double gridY = screenCoord.y * (rows / gridHeight);
+        double gridX = screenCoord.x / cellSize;
+        double gridY = screenCoord.y / cellSize;
         return new Vector(gridX, gridY);
+    }
+
+    private Vector clampGridCoord(Vector gridCoord) {
+        double clampedI = Math.max(0, Math.min(gridCoord.x, cellSize * f.cols - 1));
+        double clampedJ = Math.max(0, Math.min(gridCoord.y, cellSize * f.rows - 1));
+        return new Vector(clampedI, clampedJ);
     }
 }

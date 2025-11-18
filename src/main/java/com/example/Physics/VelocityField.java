@@ -12,8 +12,8 @@ public class VelocityField {
     protected int rows;
     public MACGrid vels;
 
-    private double pressureGrid[][]; // Store pressure at each cell
-    private boolean solidGrid[][]; // Store which cells are solid (walls)
+    private final double[][] pressureGrid; // Store pressure at each cell
+    private final boolean[][] solidGrid; // Store which cells are solid (walls)
 
     private double density;
 
@@ -25,6 +25,7 @@ public class VelocityField {
         this.pressureGrid = new double[rows][cols];
         this.solidGrid = new boolean[rows][cols];
         addOuterWalls();
+        addInnerCircle(10.0);
         this.density = 1.0;
     }
 
@@ -211,6 +212,9 @@ public class VelocityField {
 
         for (int j = minJ; j < maxJ; j++) {
             for (int i = minI; i < maxI; i++) {
+                if (isSolid(i, j)) {
+                    continue;
+                }
                 double dx = i - x;
                 double dy = j - y;
                 double dist = Math.sqrt(dx * dx + dy * dy);
@@ -236,6 +240,28 @@ public class VelocityField {
         for (int x = 0; x < cols; x++) {
             for (int y = 0; y < rows; y++) {
                 if (x == 0 || x == cols - 1 || y == 0 || y == rows - 1) {
+                    solidGrid[y][x] = true;
+                }
+            }
+        }
+    }
+
+    public void addInnerCircle(double radius) {
+        double cx = cols / 2.0;
+        double cy = rows / 2.0;
+
+        int minX = (int) Math.max(0, cx - radius);
+        int maxX = (int) Math.min(cx + radius, cols - 1);
+        int minY = (int) Math.max(0, cy - radius);
+        int maxY = (int) Math.min(cy + radius, rows - 1);
+
+        for (int x = minX; x < maxX; x++) {
+            for (int y = minY; y < maxY; y++) {
+                double dx =  x - cx;
+                double dy = y - cy;
+                double dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist <= radius) {
                     solidGrid[y][x] = true;
                 }
             }

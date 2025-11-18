@@ -64,13 +64,13 @@ public class MathUtils {
         double v11 = grid.getY(iV1, j1);
 
         // Finally, bilinearly interpolate
-        double u = MAC_getValAtGridPos(u00, u01, u10, u11, s, t);
-        double v = MAC_getValAtGridPos(v00, v01, v10, v11, s, t);
+        double u = bilInterp(u00, u01, u10, u11, s, t);
+        double v = bilInterp(v00, v01, v10, v11, s, t);
 
         return new Vector(u, v);
     }
 
-    public static double MAC_getValAtGridPos(double v00, double v01, double v10, double v11, double s, double t) {
+    public static double bilInterp(double v00, double v01, double v10, double v11, double s, double t) {
         double vb = v00 + s * (v10 - v00);
         double vt = v01 + s * (v11 - v01);
         return vb + t * (vt - vb);
@@ -97,8 +97,8 @@ public class MathUtils {
         j = Math.max(0, Math.min(rows - 1, j));
 
         // Get fractional parts for interpolation
-        double fx = (x - 0.5) - i;
-        double fy = (y - 0.5) - j;
+        double s = (x - 0.5) - i;
+        double t = (y - 0.5) - j;
 
         // Get the four surrounding cell values
         double s00 = grid[j][i];
@@ -106,10 +106,6 @@ public class MathUtils {
         double s01 = (j + 1 < rows) ? grid[j + 1][i] : s00;
         double s11 = (i + 1 < cols && j + 1 < rows) ? grid[j + 1][i + 1] : s00;
 
-        // Bilinear interpolation
-        double s0 = s00 * (1 - fx) + s10 * fx;
-        double s1 = s01 * (1 - fx) + s11 * fx;
-
-        return s0 * (1 - fy) + s1 * fy;
+        return bilInterp(s00, s01, s10, s11, s, t);
     }
 }

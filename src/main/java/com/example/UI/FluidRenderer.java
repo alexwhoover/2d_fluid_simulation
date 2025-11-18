@@ -1,5 +1,6 @@
 package com.example.UI;
 
+import com.example.Physics.Fluid;
 import com.example.Physics.SubstanceField;
 import com.example.Physics.VelocityField;
 import com.example.Utils.MathUtils;
@@ -20,13 +21,13 @@ public class FluidRenderer {
         this.cellSize = cellSize;
     }
 
-    public void drawVels(Pane pane, VelocityField vf, double max) {
+    public void drawVels(Pane pane, Fluid f, double max) {
         /*
         Grid is mirrored, so +y is down
          */
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                double speed = MathUtils.calcCentre(vf.vels, col, row);
+                double speed = MathUtils.calcCentre(f.vf.vels, col, row);
                 double norm = Math.min(speed, max) / max;
 
                 Color cellColor = Color.color(norm, 0, 1-norm);
@@ -35,16 +36,22 @@ public class FluidRenderer {
         }
     }
 
-    public void drawDensity(Pane pane, SubstanceField sf, double max) {
+    public void drawDensity(Pane pane, Fluid f, double max) {
         /*
         Grid is mirrored, so +y is down
          */
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
-                double density = sf.substance[row][col];
+                double density = f.sf.substance[row][col];
                 double norm = Math.min(density, max) / max;
+                Color cellColor;
 
-                Color cellColor = Color.color(norm, norm, norm);
+                if (!f.vf.isSolid(col, row)) {
+                    cellColor = Color.color(norm, norm, norm);
+                }
+                else {
+                    cellColor = Color.DARKGRAY;
+                }
                 fillCell(pane, row, col, cellColor);
             }
         }

@@ -12,10 +12,20 @@ full Navier-Stokes equations for an incompressible fluid.
 ## Installation and Setup Instructions
 
 ### Requirements
-- Java 17+
-- Maven
+- Java 21 JDK (`openjdk-21-jdk` or equivalent)
+- Maven 3.8+
 
-### To Run
+### Build
+```bash
+mvn package
+```
+
+### Test
+```bash
+mvn test
+```
+
+### Run
 ```bash
 mvn javafx:run
 ```

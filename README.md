@@ -31,9 +31,7 @@ mvn javafx:run
 ```
 
 ## Mathematical Context
-Given that the velocities and pressures are known at \( t = 0 \),  
-their evolution over time is governed by the incompressible  
-Navier–Stokes equations:
+Given that the velocities and pressures are known at \( t = 0 \), their evolution over time is governed by the incompressible Navier–Stokes equations:
 
 
 ![Navier-Stokes Equations](gifs/equation.png)
